@@ -5,13 +5,18 @@ import ScreenWrapper from "../components/ScreenWrapper";
 import BottomNav from "../components/BottomNav";
 import { playNotes, NOTE_NAMES } from "../utils/musicTheory";
 
-export default function LearnChordScreen({ onBack, onNavigate }) {
+export default function LearnChordScreen({ onBack, onNavigate, onSessionComplete }) {
   const { colors, mode } = useAppTheme();
   const [activeNote, setActiveNote] = useState(null);
+  const [sessionLogged, setSessionLogged] = useState(false);
 
   const handlePress = (note) => {
     setActiveNote(note);
     playNotes([note]);
+    if (!sessionLogged) {
+      onSessionComplete?.({ activity: "LearnAChord", detail: `Note ${note}` });
+      setSessionLogged(true);
+    }
   };
 
   return (

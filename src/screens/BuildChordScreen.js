@@ -30,7 +30,7 @@ export default function BuildChordScreen({ onBack, onBuilt, onNavigate }) {
       <TouchableOpacity onPress={onBack}>
         <Text style={[styles.backBtn, { color: colors.purpleLight }]}>←</Text>
       </TouchableOpacity>
-      <Text style={[styles.kicker, { color: colors.purpleLight }]}>01 / CREATE</Text>
+              <Text style={[styles.kicker, { color: colors.purpleLight }]}>01 / CREATE</Text>
       <Text style={[styles.title, { color: colors.text }]}>Build a chord</Text>
       <Text style={[styles.subtitle, { color: colors.textMuted }]}>Start with two or more notes.</Text>
 

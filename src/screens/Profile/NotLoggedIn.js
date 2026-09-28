@@ -37,6 +37,13 @@ export default function NotLoggedIn({ onLogin, onBack, onNavigate }) {
         >
           <Text style={[styles.secondaryText, { color: colors.purpleLight }]}>Create account</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.guestButton}
+          onPress={() => onNavigate("home")}
+          accessibilityRole="button"
+        >
+          <Text style={[styles.guestText, { color: colors.textMuted }]}>Proceed as guest</Text>
+        </TouchableOpacity>
       </View>
       <BottomNav active="profile" onNavigate={onNavigate} />
       <LoginModal
@@ -82,4 +89,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   secondaryText: { fontSize: 16, fontWeight: "700" },
+  guestButton: { minHeight: 46, alignItems: "center", justifyContent: "center", marginTop: 6 },
+  guestText: { fontSize: 14, fontWeight: "600" },
 });

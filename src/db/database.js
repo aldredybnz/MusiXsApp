@@ -20,6 +20,16 @@ function getDatabase() {
 						id INTEGER PRIMARY KEY CHECK (id = 1),
 						user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
 					);
+					CREATE TABLE IF NOT EXISTS history_sessions (
+						id INTEGER PRIMARY KEY NOT NULL,
+						user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+						activity TEXT NOT NULL,
+						detail TEXT,
+						outcome TEXT,
+						created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+					);
+					CREATE INDEX IF NOT EXISTS history_sessions_user_date
+						ON history_sessions (user_id, created_at DESC);
 				`);
 				return database;
 			})
@@ -107,4 +117,39 @@ export async function getCurrentUser() {
 export async function clearCurrentUser() {
 	const database = await getDatabase();
 	await database.runAsync("DELETE FROM app_session WHERE id = 1");
+}
+
+export async function recordHistorySession({ userId, activity, detail = null, outcome = null }) {
+	const database = await getDatabase();
+	await database.runAsync(
+		"INSERT INTO history_sessions (user_id, activity, detail, outcome) VALUES (?, ?, ?, ?)",
+		userId,
+		activity,
+		detail,
+		outcome
+	);
+}
+
+export async function getUserHistory(userId) {
+	const database = await getDatabase();
+	return database.getAllAsync(
+		`SELECT id, activity, detail, outcome, created_at AS createdAt
+		 FROM history_sessions
+		 WHERE user_id = ?
+		 ORDER BY id DESC
+		 LIMIT 100`,
+		userId
+	);
+}
+
+export async function getUserHistorySummary(userId) {
+	const database = await getDatabase();
+	const rows = await database.getAllAsync(
+		`SELECT activity, COUNT(*) AS total
+		 FROM history_sessions
+		 WHERE user_id = ?
+		 GROUP BY activity`,
+		userId
+	);
+	return rows.reduce((summary, row) => ({ ...summary, [row.activity]: row.total }), {});
 }

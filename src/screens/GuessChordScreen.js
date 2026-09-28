@@ -14,7 +14,7 @@ function pickRandomChord() {
   return KNOWN_CHORDS[Math.floor(Math.random() * KNOWN_CHORDS.length)];
 }
 
-export default function GuessChordScreen({ onBack, onNavigate }) {
+export default function GuessChordScreen({ onBack, onNavigate, onSessionComplete }) {
   const { colors, mode } = useAppTheme();
   const [target, setTarget] = useState(pickRandomChord);
   const [selected, setSelected] = useState([]);
@@ -31,7 +31,13 @@ export default function GuessChordScreen({ onBack, onNavigate }) {
 
   const handleSubmit = () => {
     if (selected.length === 0) return;
-    setPhase(sameNotes(selected, target.notes) ? "correct" : "wrong");
+    const isCorrect = sameNotes(selected, target.notes);
+    onSessionComplete?.({
+      activity: "GuessAChord",
+      detail: target.name,
+      outcome: isCorrect ? "correct" : "wrong",
+    });
+    setPhase(isCorrect ? "correct" : "wrong");
   };
 
   const handleNext = () => {

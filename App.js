@@ -3,7 +3,7 @@ import { ActivityIndicator, View } from "react-native";
 import { ThemeProvider } from "./src/theme";
 import { useAppTheme } from "./src/theme";
 import ScreenWrapper from "./src/components/ScreenWrapper";
-import { clearCurrentUser, getCurrentUser, loginUser, registerUser, saveCurrentUser } from "./src/db/database";
+import { clearCurrentUser, getCurrentUser, getUserHistory,getUserHistorySummary, loginUser, recordHistorySession, registerUser, saveCurrentUser } from "./src/db/database";
 import StartScreen from "./src/screens/StartScreen";
 import HomeScreen from "./src/screens/HomeScreen";
 import BuildChordScreen from "./src/screens/BuildChordScreen";
@@ -11,14 +11,14 @@ import ChordResultScreen from "./src/screens/ChordResultScreen";
 import GuessChordScreen from "./src/screens/GuessChordScreen";
 import LearnChordScreen from "./src/screens/LearnChordScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
-import ProfileScreen from "./src/screens/Profile/ProfileScreen";
-import NotLoggedIn from "./src/screens/Profile/NotLoggedIn";
-import RegisterScreen from "./src/screens/Profile/RegisterScreen";
+import HistoryScreen from "./src/screens/history/HistoryScreen";
+import ProfileScreen from "./src/screens/profile/ProfileScreen";
+import NotLoggedIn from "./src/screens/profile/NotLoggedIn";
+import RegisterScreen from "./src/screens/profile/RegisterScreen";
 import PlaceholderScreen from "./src/screens/PlaceholderScreen";
 
 // Only History and Profile remain unbuilt at this stage.
 const PLACEHOLDER_TITLES = {
-  history: "History",
   profile: "Profile",
 };
 
@@ -69,6 +69,13 @@ function AppContent() {
         onBuilt={(result) => {
           setLastResult(result);
           setScreen("result");
+          if (signedInUser) {
+            recordHistorySession({
+              userId: signedInUser.id,
+              activity: "BuildAChord",
+              detail: result.chordName,
+            }).catch((error) => console.error("Could not save history session", error));
+          }
         }}
       />
     );
@@ -85,15 +92,62 @@ function AppContent() {
   }
 
   if (screen === "guess") {
-    return <GuessChordScreen onBack={goHome} onNavigate={setScreen} />;
+    return (
+      <GuessChordScreen
+        onBack={goHome}
+        onNavigate={setScreen}
+        onSessionComplete={({ activity, detail, outcome }) => {
+          if (signedInUser) {
+            recordHistorySession({
+              userId: signedInUser.id,
+              activity,
+              detail,
+              outcome,
+            }).catch((error) => console.error("Could not save history session", error));
+          }
+        }}
+      />
+      );
   }
 
   if (screen === "learn") {
-    return <LearnChordScreen onBack={goHome} onNavigate={setScreen} />;
+    return (
+      <LearnChordScreen
+        onBack={goHome}
+        onNavigate={setScreen}
+        onSessionComplete={({ activity, detail }) => {
+          if (signedInUser) {
+            recordHistorySession({ userId: signedInUser.id, activity, detail })
+              .catch((error) => console.error("Could not save history session", error));
+          }
+        }}
+      />
+      );
   }
 
   if (screen === "settings") {
     return <SettingsScreen onBack={goHome} onNavigate={setScreen} />;
+  }
+
+  if (screen === "history") {
+    if (!authReady) {
+      return (
+        <ScreenWrapper>
+          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+            <ActivityIndicator color={colors.purple} />
+          </View>
+        </ScreenWrapper>
+      );
+    }
+    return (
+      <HistoryScreen
+        user={signedInUser}
+        onBack={goHome}
+        onNavigate={setScreen}
+        loadHistory={getUserHistory}
+        loadSummary={getUserHistorySummary}
+      />
+    );
   }
 
   if (screen === "profile") {
